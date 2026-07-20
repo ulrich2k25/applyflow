@@ -1,0 +1,235 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ApplicationStatus {
+  SAVED
+  PREPARING
+  APPLIED
+  IN_REVIEW
+  INTERVIEW
+  OFFER
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  ARCHIVED
+
+  @@map("application_status")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+
+  @@map("priority")
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  WORKING_STUDENT
+  APPRENTICESHIP
+  FREELANCE
+  TEMPORARY
+  OTHER
+
+  @@map("employment_type")
+}
+
+enum WorkMode {
+  ON_SITE
+  HYBRID
+  REMOTE
+
+  @@map("work_mode")
+}
+
+enum InterviewType {
+  PHONE
+  VIDEO
+  ON_SITE
+  TECHNICAL
+  HR
+  CASE_STUDY
+  OTHER
+
+  @@map("interview_type")
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+
+  @@map("interview_status")
+}
+
+enum DocumentType {
+  CV
+  COVER_LETTER
+  CERTIFICATE
+  REFERENCE
+  OTHER
+
+  @@map("document_type")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  firstName    String   @map("first_name") @db.VarChar(100)
+  lastName     String   @map("last_name") @db.VarChar(100)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  companies    Company[]
+  applications Application[]
+  documents    Document[]
+
+  @@map("users")
+}
+
+model Company {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  name         String    @db.VarChar(200)
+  website      String?   @db.VarChar(500)
+  industry     String?   @db.VarChar(150)
+  city         String?   @db.VarChar(150)
+  country      String?   @db.VarChar(100)
+  contactName  String?   @map("contact_name") @db.VarChar(200)
+  contactEmail String?   @map("contact_email") @db.VarChar(255)
+  contactPhone String?   @map("contact_phone") @db.VarChar(50)
+  notes        String?   @db.Text
+  archivedAt   DateTime? @map("archived_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("companies")
+}
+
+model Application {
+  id             String            @id @default(uuid()) @db.Uuid
+  userId         String            @map("user_id") @db.Uuid
+  companyId      String            @map("company_id") @db.Uuid
+  jobTitle       String            @map("job_title") @db.VarChar(200)
+  jobUrl         String?           @map("job_url") @db.VarChar(1000)
+  description    String?           @db.Text
+  location       String?           @db.VarChar(200)
+  employmentType EmploymentType?   @map("employment_type")
+  workMode       WorkMode?         @map("work_mode")
+  source         String?           @db.VarChar(150)
+  salaryMin      Decimal?          @map("salary_min") @db.Decimal(12, 2)
+  salaryMax      Decimal?          @map("salary_max") @db.Decimal(12, 2)
+  currency       String?           @db.Char(3)
+  status         ApplicationStatus @default(SAVED)
+  priority       Priority          @default(MEDIUM)
+  deadline       DateTime?         @db.Date
+  appliedAt      DateTime?         @map("applied_at") @db.Timestamptz(3)
+  archivedAt     DateTime?         @map("archived_at") @db.Timestamptz(3)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user          User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  statusHistory ApplicationStatusHistory[]
+  interviews    Interview[]
+  notes         Note[]
+  documents     ApplicationDocument[]
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([companyId])
+  @@index([deadline])
+  @@map("applications")
+}
+
+model ApplicationStatusHistory {
+  id            String             @id @default(uuid()) @db.Uuid
+  applicationId String             @map("application_id") @db.Uuid
+  fromStatus    ApplicationStatus? @map("from_status")
+  toStatus      ApplicationStatus  @map("to_status")
+  changedAt     DateTime           @default(now()) @map("changed_at") @db.Timestamptz(3)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, changedAt])
+  @@map("application_status_history")
+}
+
+model Interview {
+  id              String          @id @default(uuid()) @db.Uuid
+  applicationId   String          @map("application_id") @db.Uuid
+  type            InterviewType
+  status          InterviewStatus @default(SCHEDULED)
+  scheduledAt     DateTime        @map("scheduled_at") @db.Timestamptz(3)
+  durationMinutes Int?            @map("duration_minutes")
+  location        String?         @db.VarChar(300)
+  meetingUrl      String?         @map("meeting_url") @db.VarChar(1000)
+  contactName     String?         @map("contact_name") @db.VarChar(200)
+  notes           String?         @db.Text
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, scheduledAt])
+  @@map("interviews")
+}
+
+model Note {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicationId String   @map("application_id") @db.Uuid
+  content       String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+  @@map("notes")
+}
+
+model Document {
+  id         String       @id @default(uuid()) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  name       String       @db.VarChar(255)
+  type       DocumentType
+  storageKey String       @unique @map("storage_key") @db.VarChar(500)
+  mimeType   String       @map("mime_type") @db.VarChar(150)
+  sizeBytes  BigInt       @map("size_bytes") @db.BigInt
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications ApplicationDocument[]
+
+  @@index([userId, type])
+  @@map("documents")
+}
+
+model ApplicationDocument {
+  applicationId String   @map("application_id") @db.Uuid
+  documentId    String   @map("document_id") @db.Uuid
+  attachedAt    DateTime @default(now()) @map("attached_at") @db.Timestamptz(3)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  document    Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([applicationId, documentId])
+  @@map("application_documents")
+}
