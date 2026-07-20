@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { InterviewsModule } from './interviews/interviews.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ApplicationsModule } from './applications/applications.module';
     AuthModule,
     CompaniesModule,
     ApplicationsModule,
+    InterviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
