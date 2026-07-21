@@ -172,7 +172,22 @@ export class ApplicationsService {
       throw new NotFoundException('Candidature introuvable.');
     }
 
-    return application;
+    return {
+      ...application,
+      documents: application.documents.map((attachment) => {
+        const { storageKey, ...document } = attachment.document;
+
+        void storageKey;
+
+        return {
+          ...attachment,
+          document: {
+            ...document,
+            sizeBytes: Number(document.sizeBytes),
+          },
+        };
+      }),
+    };
   }
 
   async update(

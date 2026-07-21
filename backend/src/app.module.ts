@@ -9,6 +9,8 @@ import { CompaniesModule } from './companies/companies.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { NotesModule } from './notes/notes.module';
+import { DocumentsModule } from './documents/documents.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { NotesModule } from './notes/notes.module';
     ApplicationsModule,
     InterviewsModule,
     NotesModule,
+    DocumentsModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],
