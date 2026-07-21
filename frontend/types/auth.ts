@@ -12,6 +12,11 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface MessageResponse {
+  message: string;
+  email?: string;
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;

@@ -98,6 +98,15 @@ export default function LoginPage() {
             placeholder="vous@exemple.com"
             className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
           />
+
+          <div className="mt-3 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              {t("auth.forgotPassword")}
+            </Link>
+          </div>
         </div>
 
         <div>

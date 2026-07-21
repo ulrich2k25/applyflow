@@ -59,7 +59,7 @@ export default function RegisterPage() {
         password,
       });
 
-      router.replace("/dashboard");
+      router.replace("/login");
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error

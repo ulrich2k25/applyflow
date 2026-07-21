@@ -16,6 +16,7 @@ import {
 import type {
   AuthResponse,
   LoginCredentials,
+  MessageResponse,
   RegisterData,
   User,
 } from "@/types/auth";
@@ -32,7 +33,7 @@ interface AuthContextValue {
   ) => Promise<void>;
   register: (
     data: RegisterData,
-  ) => Promise<void>;
+  ) => Promise<MessageResponse>;
   logout: () => void;
 }
 
@@ -138,18 +139,15 @@ export function AuthProvider({
 
   const register = useCallback(
     async (data: RegisterData) => {
-      const session =
-        await apiRequest<AuthResponse>(
-          "/auth/register",
-          {
-            method: "POST",
-            body: JSON.stringify(data),
-          },
-        );
-
-      saveSession(session);
+      return apiRequest<MessageResponse>(
+        "/auth/register",
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        },
+      );
     },
-    [saveSession],
+    [],
   );
 
   const logout = useCallback(() => {
