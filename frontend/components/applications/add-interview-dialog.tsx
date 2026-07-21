@@ -9,6 +9,7 @@ import {
   type FormEvent,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 import { apiRequest } from "@/lib/api";
 import type { ApplicationInterview } from "@/types/application";
 import type { InterviewType } from "@/types/interview";
@@ -43,6 +44,7 @@ export function AddInterviewDialog({
   onCreated,
 }: AddInterviewDialogProps) {
   const { token } = useAuth();
+  const { t } = useI18n();
 
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] =
@@ -141,7 +143,7 @@ export function AddInterviewDialog({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible d’ajouter l’entretien.",
+          : t("interviewDialog.error"),
       );
     } finally {
       setIsSubmitting(false);
@@ -156,7 +158,7 @@ export function AddInterviewDialog({
         className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
       >
         <CalendarPlus className="size-4" />
-        Ajouter
+        {t("common.add")}
       </button>
 
       {isOpen && (
@@ -173,11 +175,10 @@ export function AddInterviewDialog({
                   id="interview-dialog-title"
                   className="text-lg font-semibold text-slate-950"
                 >
-                  Nouvel entretien
+                  {t("interviewDialog.new")}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Planifiez la prochaine étape du
-                  recrutement.
+                  {t("interviewDialog.subtitle")}
                 </p>
               </div>
 
@@ -185,7 +186,7 @@ export function AddInterviewDialog({
                 type="button"
                 onClick={close}
                 className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
-                aria-label="Fermer"
+                aria-label={t("common.close")}
               >
                 <X className="size-5" />
               </button>
@@ -210,7 +211,7 @@ export function AddInterviewDialog({
                     htmlFor="interviewType"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    Type
+                    {t("interviewDialog.type")}
                   </label>
                   <select
                     id="interviewType"
@@ -225,32 +226,32 @@ export function AddInterviewDialog({
                     className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   >
                     <option value="PHONE">
-                      Téléphonique
+                      {t("interviewType.PHONE")}
                     </option>
                     <option value="VIDEO">
-                      Visioconférence
+                      {t("interviewType.VIDEO")}
                     </option>
                     <option value="ON_SITE">
-                      Sur site
+                      {t("interviewType.ON_SITE")}
                     </option>
                     <option value="TECHNICAL">
-                      Technique
+                      {t("interviewType.TECHNICAL")}
                     </option>
                     <option value="HR">
-                      Ressources humaines
+                      {t("interviewType.HR")}
                     </option>
                     <option value="CASE_STUDY">
-                      Étude de cas
+                      {t("interviewType.CASE_STUDY")}
                     </option>
                     <option value="OTHER">
-                      Autre
+                      {t("interviewType.OTHER")}
                     </option>
                   </select>
                 </div>
 
                 <FormField
                   id="scheduledAt"
-                  label="Date et heure"
+                  label={t("interviewDialog.dateTime")}
                   type="datetime-local"
                   required
                   value={form.scheduledAt}
@@ -264,7 +265,7 @@ export function AddInterviewDialog({
 
                 <FormField
                   id="durationMinutes"
-                  label="Durée en minutes"
+                  label={t("interviewDialog.duration")}
                   type="number"
                   min={1}
                   max={1440}
@@ -279,17 +280,17 @@ export function AddInterviewDialog({
 
                 <FormField
                   id="location"
-                  label="Lieu"
+                  label={t("interviewDialog.location")}
                   value={form.location}
                   onChange={(value) =>
                     updateField("location", value)
                   }
-                  placeholder="Bureau, adresse…"
+                  placeholder={t("interviewDialog.locationPlaceholder")}
                 />
 
                 <FormField
                   id="meetingUrl"
-                  label="Lien de visioconférence"
+                  label={t("interviewDialog.meetingUrl")}
                   type="url"
                   value={form.meetingUrl}
                   onChange={(value) =>
@@ -303,7 +304,7 @@ export function AddInterviewDialog({
 
                 <FormField
                   id="contactName"
-                  label="Nom du contact"
+                  label={t("interviewDialog.contact")}
                   value={form.contactName}
                   onChange={(value) =>
                     updateField(
@@ -319,7 +320,7 @@ export function AddInterviewDialog({
                   htmlFor="interviewNotes"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Notes de préparation
+                  {t("interviewDialog.notes")}
                 </label>
                 <textarea
                   id="interviewNotes"
@@ -342,7 +343,7 @@ export function AddInterviewDialog({
                   onClick={close}
                   className="h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </button>
 
                 <button
@@ -354,8 +355,8 @@ export function AddInterviewDialog({
                   className="h-11 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {isSubmitting
-                    ? "Planification…"
-                    : "Planifier l’entretien"}
+                    ? t("interviewDialog.scheduling")
+                    : t("interviewDialog.schedule")}
                 </button>
               </footer>
             </form>

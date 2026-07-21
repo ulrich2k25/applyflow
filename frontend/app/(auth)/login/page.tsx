@@ -7,10 +7,12 @@ import {
   type FormEvent,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] =
@@ -39,7 +41,7 @@ export default function LoginPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Connexion impossible. Veuillez réessayer.",
+          : t("auth.loginError"),
       );
     } finally {
       setIsSubmitting(false);
@@ -50,16 +52,15 @@ export default function LoginPage() {
     <>
       <div className="mb-8">
         <p className="text-sm font-semibold text-indigo-600">
-          Heureux de vous revoir
+          {t("auth.back")}
         </p>
 
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-          Connectez-vous à ApplyFlow
+          {t("auth.loginTitle")}
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Retrouvez vos candidatures et vos prochaines
-          échéances.
+          {t("auth.loginSubtitle")}
         </p>
       </div>
 
@@ -81,7 +82,7 @@ export default function LoginPage() {
             htmlFor="email"
             className="mb-2 block text-sm font-medium text-slate-700"
           >
-            Adresse e-mail
+            {t("auth.email")}
           </label>
 
           <input
@@ -105,11 +106,11 @@ export default function LoginPage() {
               htmlFor="password"
               className="text-sm font-medium text-slate-700"
             >
-              Mot de passe
+              {t("auth.password")}
             </label>
 
             <span className="text-sm text-slate-400">
-              12 caractères minimum
+              {t("auth.passwordHint")}
             </span>
           </div>
 
@@ -123,7 +124,7 @@ export default function LoginPage() {
             onChange={(event) =>
               setPassword(event.target.value)
             }
-            placeholder="Votre mot de passe"
+            placeholder={t("auth.passwordPlaceholder")}
             className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
           />
         </div>
@@ -134,18 +135,18 @@ export default function LoginPage() {
           className="flex h-12 w-full items-center justify-center rounded-xl bg-indigo-600 px-5 font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting
-            ? "Connexion en cours…"
-            : "Se connecter"}
+            ? t("auth.loggingIn")
+            : t("auth.login")}
         </button>
       </form>
 
       <p className="mt-8 text-center text-sm text-slate-600">
-        Vous n’avez pas encore de compte ?{" "}
+        {t("auth.noAccount")} {" "}
         <Link
           href="/register"
           className="font-semibold text-indigo-600 hover:text-indigo-700"
         >
-          Créer un compte
+          {t("auth.createAccount")}
         </Link>
       </p>
     </>

@@ -12,6 +12,7 @@ import {
   type FormEvent,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 import { apiRequest } from "@/lib/api";
 import type {
   ApplicationRecord,
@@ -62,6 +63,7 @@ const initialForm: ApplicationForm = {
 export default function NewApplicationPage() {
   const router = useRouter();
   const { token } = useAuth();
+  const { t } = useI18n();
 
   const [companies, setCompanies] = useState<
     Company[]
@@ -103,7 +105,7 @@ export default function NewApplicationPage() {
           setError(
             caughtError instanceof Error
               ? caughtError.message
-              : "Impossible de charger les entreprises.",
+              : t("applicationForm.loadCompaniesError"),
           );
         }
       })
@@ -116,7 +118,7 @@ export default function NewApplicationPage() {
     return () => {
       isCancelled = true;
     };
-  }, [token]);
+  }, [t, token]);
 
   function updateField<K extends keyof ApplicationForm>(
     field: K,
@@ -154,7 +156,7 @@ export default function NewApplicationPage() {
       salaryMin > salaryMax
     ) {
       setError(
-        "Le salaire minimum ne peut pas dépasser le salaire maximum.",
+        t("applicationForm.salaryError"),
       );
       return;
     }
@@ -229,7 +231,7 @@ export default function NewApplicationPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible de créer la candidature.",
+          : t("applicationForm.createError"),
       );
     } finally {
       setIsSubmitting(false);
@@ -244,16 +246,15 @@ export default function NewApplicationPage() {
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
         >
           <ArrowLeft className="size-4" />
-          Retour aux candidatures
+          {t("applicationForm.back")}
         </Link>
 
         <header className="mt-6">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-            Nouvelle candidature
+            {t("applicationForm.title")}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Enregistrez le poste et organisez son
-            suivi dès maintenant.
+            {t("applicationForm.subtitle")}
           </p>
         </header>
 
@@ -272,11 +273,10 @@ export default function NewApplicationPage() {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-semibold text-slate-950">
-              Poste
+              {t("applicationForm.position")}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Les informations essentielles de la
-              candidature.
+              {t("applicationForm.positionHint")}
             </p>
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -285,7 +285,7 @@ export default function NewApplicationPage() {
                   htmlFor="companyId"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Entreprise
+                  {t("applicationForm.company")}
                 </label>
 
                 <select
@@ -303,8 +303,8 @@ export default function NewApplicationPage() {
                 >
                   <option value="">
                     {isLoadingCompanies
-                      ? "Chargement…"
-                      : "Sélectionner une entreprise"}
+                      ? t("common.loading")
+                      : t("applicationForm.selectCompany")}
                   </option>
                   {companies.map((company) => (
                     <option
@@ -319,21 +319,19 @@ export default function NewApplicationPage() {
                 {!isLoadingCompanies &&
                   companies.length === 0 && (
                     <p className="mt-2 text-xs text-amber-700">
-                      Vous devez d’abord{" "}
                       <Link
                         href="/companies"
                         className="font-semibold underline"
                       >
-                        créer une entreprise
+                        {t("applicationForm.companyRequired")}
                       </Link>
-                      .
                     </p>
                   )}
               </div>
 
               <FormField
                 id="jobTitle"
-                label="Intitulé du poste"
+                label={t("applicationForm.jobTitle")}
                 required
                 value={form.jobTitle}
                 onChange={(value) =>
@@ -344,7 +342,7 @@ export default function NewApplicationPage() {
 
               <FormField
                 id="location"
-                label="Lieu"
+                label={t("applicationForm.location")}
                 value={form.location}
                 onChange={(value) =>
                   updateField("location", value)
@@ -354,7 +352,7 @@ export default function NewApplicationPage() {
 
               <FormField
                 id="jobUrl"
-                label="Lien vers l’offre"
+                label={t("applicationForm.jobUrl")}
                 type="url"
                 value={form.jobUrl}
                 onChange={(value) =>
@@ -365,7 +363,8 @@ export default function NewApplicationPage() {
 
               <SelectField
                 id="employmentType"
-                label="Type de contrat"
+                label={t("applicationForm.employment")}
+                emptyLabel={t("common.notProvided")}
                 value={form.employmentType}
                 onChange={(value) =>
                   updateField(
@@ -373,27 +372,13 @@ export default function NewApplicationPage() {
                     value as EmploymentType | "",
                   )
                 }
-                options={[
-                  ["FULL_TIME", "Temps plein"],
-                  ["PART_TIME", "Temps partiel"],
-                  ["INTERNSHIP", "Stage"],
-                  [
-                    "WORKING_STUDENT",
-                    "Werkstudent",
-                  ],
-                  [
-                    "APPRENTICESHIP",
-                    "Alternance",
-                  ],
-                  ["FREELANCE", "Freelance"],
-                  ["TEMPORARY", "Temporaire"],
-                  ["OTHER", "Autre"],
-                ]}
+                options={(["FULL_TIME", "PART_TIME", "INTERNSHIP", "WORKING_STUDENT", "APPRENTICESHIP", "FREELANCE", "TEMPORARY", "OTHER"] as EmploymentType[]).map((value) => [value, t(`employment.${value}`)])}
               />
 
               <SelectField
                 id="workMode"
-                label="Mode de travail"
+                label={t("applicationForm.workMode")}
+                emptyLabel={t("common.notProvided")}
                 value={form.workMode}
                 onChange={(value) =>
                   updateField(
@@ -401,16 +386,12 @@ export default function NewApplicationPage() {
                     value as WorkMode | "",
                   )
                 }
-                options={[
-                  ["ON_SITE", "Sur site"],
-                  ["HYBRID", "Hybride"],
-                  ["REMOTE", "À distance"],
-                ]}
+                options={(["ON_SITE", "HYBRID", "REMOTE"] as WorkMode[]).map((value) => [value, t(`workMode.${value}`)])}
               />
 
               <FormField
                 id="source"
-                label="Source"
+                label={t("applicationForm.source")}
                 value={form.source}
                 onChange={(value) =>
                   updateField("source", value)
@@ -420,7 +401,7 @@ export default function NewApplicationPage() {
 
               <FormField
                 id="deadline"
-                label="Date limite"
+                label={t("applicationForm.deadline")}
                 type="date"
                 value={form.deadline}
                 onChange={(value) =>
@@ -434,7 +415,7 @@ export default function NewApplicationPage() {
                 htmlFor="description"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Description ou informations utiles
+                {t("applicationForm.description")}
               </label>
               <textarea
                 id="description"
@@ -453,13 +434,14 @@ export default function NewApplicationPage() {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-semibold text-slate-950">
-              Suivi
+              {t("applicationForm.tracking")}
             </h2>
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
               <SelectField
                 id="status"
-                label="Statut initial"
+                label={t("applicationForm.initialStatus")}
+                emptyLabel={t("common.notProvided")}
                 value={form.status}
                 onChange={(value) =>
                   updateField(
@@ -467,25 +449,13 @@ export default function NewApplicationPage() {
                     value as ApplicationStatus,
                   )
                 }
-                options={[
-                  ["SAVED", "Enregistrée"],
-                  [
-                    "PREPARING",
-                    "En préparation",
-                  ],
-                  ["APPLIED", "Envoyée"],
-                  ["IN_REVIEW", "En examen"],
-                  ["INTERVIEW", "Entretien"],
-                  ["OFFER", "Offre reçue"],
-                  ["ACCEPTED", "Acceptée"],
-                  ["REJECTED", "Refusée"],
-                  ["WITHDRAWN", "Retirée"],
-                ]}
+                options={(["SAVED", "PREPARING", "APPLIED", "IN_REVIEW", "INTERVIEW", "OFFER", "ACCEPTED", "REJECTED", "WITHDRAWN"] as ApplicationStatus[]).map((value) => [value, t(`status.${value}`)])}
               />
 
               <SelectField
                 id="priority"
-                label="Priorité"
+                label={t("applicationForm.priority")}
+                emptyLabel={t("common.notProvided")}
                 value={form.priority}
                 onChange={(value) =>
                   updateField(
@@ -493,24 +463,20 @@ export default function NewApplicationPage() {
                     value as Priority,
                   )
                 }
-                options={[
-                  ["LOW", "Basse"],
-                  ["MEDIUM", "Moyenne"],
-                  ["HIGH", "Haute"],
-                ]}
+                options={(["LOW", "MEDIUM", "HIGH"] as Priority[]).map((value) => [value, t(`priority.${value}`)])}
               />
             </div>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-semibold text-slate-950">
-              Rémunération facultative
+              {t("applicationForm.salary")}
             </h2>
 
             <div className="mt-6 grid gap-5 sm:grid-cols-3">
               <FormField
                 id="salaryMin"
-                label="Minimum"
+                label={t("applicationForm.minimum")}
                 type="number"
                 value={form.salaryMin}
                 onChange={(value) =>
@@ -519,7 +485,7 @@ export default function NewApplicationPage() {
               />
               <FormField
                 id="salaryMax"
-                label="Maximum"
+                label={t("applicationForm.maximum")}
                 type="number"
                 value={form.salaryMax}
                 onChange={(value) =>
@@ -528,7 +494,7 @@ export default function NewApplicationPage() {
               />
               <FormField
                 id="currency"
-                label="Devise"
+                label={t("applicationForm.currency")}
                 value={form.currency}
                 maxLength={3}
                 onChange={(value) =>
@@ -546,7 +512,7 @@ export default function NewApplicationPage() {
               href="/applications"
               className="inline-flex h-11 items-center rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Annuler
+              {t("common.cancel")}
             </Link>
 
             <button
@@ -559,8 +525,8 @@ export default function NewApplicationPage() {
             >
               <Save className="size-4" />
               {isSubmitting
-                ? "Enregistrement…"
-                : "Créer la candidature"}
+                ? t("applicationForm.creating")
+                : t("applicationForm.create")}
             </button>
           </footer>
         </form>
@@ -618,12 +584,14 @@ function SelectField({
   value,
   onChange,
   options,
+  emptyLabel,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: Array<[string, string]>;
+  emptyLabel: string;
 }) {
   return (
     <div>
@@ -641,7 +609,7 @@ function SelectField({
         }
         className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
       >
-        <option value="">Non renseigné</option>
+        <option value="">{emptyLabel}</option>
         {options.map(([optionValue, label]) => (
           <option
             key={optionValue}

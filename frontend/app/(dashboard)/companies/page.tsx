@@ -15,6 +15,7 @@ import {
   type FormEvent,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 import { apiRequest } from "@/lib/api";
 import type {
   Company,
@@ -47,6 +48,7 @@ function removeEmptyValues(
 
 export default function CompaniesPage() {
   const { token } = useAuth();
+  const { t } = useI18n();
 
   const [companies, setCompanies] = useState<
     Company[]
@@ -91,7 +93,7 @@ export default function CompaniesPage() {
           setError(
             caughtError instanceof Error
               ? caughtError.message
-              : "Impossible de charger les entreprises.",
+              : t("companies.loadError"),
           );
         }
       })
@@ -104,7 +106,7 @@ export default function CompaniesPage() {
     return () => {
       isCancelled = true;
     };
-  }, [requestKey, token]);
+  }, [requestKey, t, token]);
 
   function updateField(
     field: keyof CreateCompanyData,
@@ -188,7 +190,7 @@ export default function CompaniesPage() {
       setFormError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible d’enregistrer l’entreprise.",
+          : t("companies.saveError"),
       );
     } finally {
       setIsSubmitting(false);
@@ -203,7 +205,9 @@ export default function CompaniesPage() {
     }
 
     const confirmed = window.confirm(
-      `Archiver l’entreprise « ${company.name} » ?`,
+      t("companies.archiveConfirm", {
+        name: company.name,
+      }),
     );
 
     if (!confirmed) {
@@ -225,7 +229,7 @@ export default function CompaniesPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible d’archiver l’entreprise.",
+          : t("companies.archiveError"),
       );
     }
   }
@@ -236,12 +240,12 @@ export default function CompaniesPage() {
         <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Entreprises
+              {t("companies.title")}
             </h1>
             <p className="mt-2 text-sm text-slate-600">
-              {companies.length} entreprise
-              {companies.length !== 1 ? "s" : ""} dans
-              votre espace
+              {t("companies.count", {
+                count: companies.length,
+              })}
             </p>
           </div>
 
@@ -251,7 +255,7 @@ export default function CompaniesPage() {
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
           >
             <Plus className="size-4" />
-            Ajouter une entreprise
+            {t("companies.add")}
           </button>
         </header>
 
@@ -276,18 +280,17 @@ export default function CompaniesPage() {
               <Building2 className="size-6" />
             </div>
             <h2 className="mt-5 text-lg font-semibold text-slate-950">
-              Ajoutez votre première entreprise
+              {t("companies.empty")}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Les entreprises centralisent les postes,
-              contacts et candidatures associés.
+              {t("companies.emptyHint")}
             </p>
             <button
               type="button"
               onClick={openCreateForm}
               className="mt-6 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
             >
-              Ajouter une entreprise
+              {t("companies.add")}
             </button>
           </section>
         ) : (
@@ -337,7 +340,7 @@ export default function CompaniesPage() {
                 {company.contactName && (
                   <div className="mt-5 border-t border-slate-100 pt-4">
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                      Contact
+                      {t("companies.contact")}
                     </p>
                     <p className="mt-1 text-sm font-medium text-slate-700">
                       {company.contactName}
@@ -354,7 +357,7 @@ export default function CompaniesPage() {
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     <Pencil className="size-4" />
-                    Modifier
+                    {t("common.edit")}
                   </button>
 
                   <button
@@ -363,7 +366,9 @@ export default function CompaniesPage() {
                       void archiveCompany(company)
                     }
                     className="flex size-10 items-center justify-center rounded-xl border border-slate-300 text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                    aria-label={`Archiver ${company.name}`}
+                    aria-label={t("companies.archiveConfirm", {
+                      name: company.name,
+                    })}
                   >
                     <Archive className="size-4" />
                   </button>
@@ -389,11 +394,11 @@ export default function CompaniesPage() {
                   className="text-lg font-semibold text-slate-950"
                 >
                   {editingCompany
-                    ? "Modifier l’entreprise"
-                    : "Nouvelle entreprise"}
+                    ? t("companies.edit")
+                    : t("companies.new")}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Seul le nom est obligatoire.
+                  {t("companies.onlyName")}
                 </p>
               </div>
 
@@ -401,7 +406,7 @@ export default function CompaniesPage() {
                 type="button"
                 onClick={closeForm}
                 className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
-                aria-label="Fermer"
+                aria-label={t("common.close")}
               >
                 <X className="size-5" />
               </button>
@@ -425,7 +430,7 @@ export default function CompaniesPage() {
                   htmlFor="companyName"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Nom de l’entreprise
+                  {t("companies.name")}
                 </label>
                 <input
                   id="companyName"
@@ -445,7 +450,7 @@ export default function CompaniesPage() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <FormField
                   id="industry"
-                  label="Secteur"
+                  label={t("companies.industry")}
                   value={form.industry ?? ""}
                   onChange={(value) =>
                     updateField("industry", value)
@@ -453,7 +458,7 @@ export default function CompaniesPage() {
                 />
                 <FormField
                   id="website"
-                  label="Site web"
+                  label={t("companies.website")}
                   type="url"
                   placeholder="https://entreprise.com"
                   value={form.website ?? ""}
@@ -463,7 +468,7 @@ export default function CompaniesPage() {
                 />
                 <FormField
                   id="city"
-                  label="Ville"
+                  label={t("companies.city")}
                   value={form.city ?? ""}
                   onChange={(value) =>
                     updateField("city", value)
@@ -471,7 +476,7 @@ export default function CompaniesPage() {
                 />
                 <FormField
                   id="country"
-                  label="Pays"
+                  label={t("companies.country")}
                   value={form.country ?? ""}
                   onChange={(value) =>
                     updateField("country", value)
@@ -481,13 +486,13 @@ export default function CompaniesPage() {
 
               <div className="border-t border-slate-200 pt-5">
                 <h3 className="text-sm font-semibold text-slate-900">
-                  Contact facultatif
+                  {t("companies.optionalContact")}
                 </h3>
 
                 <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   <FormField
                     id="contactName"
-                    label="Nom du contact"
+                    label={t("companies.contactName")}
                     value={form.contactName ?? ""}
                     onChange={(value) =>
                       updateField(
@@ -498,7 +503,7 @@ export default function CompaniesPage() {
                   />
                   <FormField
                     id="contactEmail"
-                    label="E-mail du contact"
+                    label={t("companies.contactEmail")}
                     type="email"
                     value={form.contactEmail ?? ""}
                     onChange={(value) =>
@@ -510,7 +515,7 @@ export default function CompaniesPage() {
                   />
                   <FormField
                     id="contactPhone"
-                    label="Téléphone"
+                    label={t("companies.phone")}
                     type="tel"
                     value={form.contactPhone ?? ""}
                     onChange={(value) =>
@@ -528,7 +533,7 @@ export default function CompaniesPage() {
                   htmlFor="companyNotes"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Notes
+                  {t("companies.notes")}
                 </label>
                 <textarea
                   id="companyNotes"
@@ -550,7 +555,7 @@ export default function CompaniesPage() {
                   onClick={closeForm}
                   className="h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -558,10 +563,10 @@ export default function CompaniesPage() {
                   className="h-11 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
                 >
                   {isSubmitting
-                    ? "Enregistrement…"
+                    ? t("common.saving")
                     : editingCompany
-                      ? "Enregistrer"
-                      : "Créer l’entreprise"}
+                      ? t("common.save")
+                      : t("companies.create")}
                 </button>
               </footer>
             </form>

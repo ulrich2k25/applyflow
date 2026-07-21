@@ -15,11 +15,11 @@ import {
   useState,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 import { apiRequest } from "@/lib/api";
 import type {
   Interview,
   InterviewStatus,
-  InterviewType,
 } from "@/types/interview";
 
 type InterviewFilter =
@@ -27,29 +27,6 @@ type InterviewFilter =
   | "UPCOMING"
   | "COMPLETED"
   | "CANCELLED";
-
-const typeLabels: Record<
-  InterviewType,
-  string
-> = {
-  PHONE: "Téléphonique",
-  VIDEO: "Visioconférence",
-  ON_SITE: "Sur site",
-  TECHNICAL: "Technique",
-  HR: "Ressources humaines",
-  CASE_STUDY: "Étude de cas",
-  OTHER: "Autre",
-};
-
-const statusLabels: Record<
-  InterviewStatus,
-  string
-> = {
-  SCHEDULED: "Planifié",
-  COMPLETED: "Terminé",
-  CANCELLED: "Annulé",
-  RESCHEDULED: "Replanifié",
-};
 
 const statusClasses: Record<
   InterviewStatus,
@@ -63,20 +40,21 @@ const statusClasses: Record<
   CANCELLED: "bg-slate-100 text-slate-600",
 };
 
-const dateFormatter = new Intl.DateTimeFormat(
-  "fr-FR",
-  {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  },
-);
-
 export default function InterviewsPage() {
   const { token } = useAuth();
+  const { locale, t } = useI18n();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    [locale],
+  );
 
   const [interviews, setInterviews] = useState<
     Interview[]
@@ -113,7 +91,7 @@ export default function InterviewsPage() {
           setError(
             caughtError instanceof Error
               ? caughtError.message
-              : "Impossible de charger les entretiens.",
+              : t("interviews.loadError"),
           );
         }
       })
@@ -126,7 +104,7 @@ export default function InterviewsPage() {
     return () => {
       isCancelled = true;
     };
-  }, [token]);
+  }, [t, token]);
 
   const filteredInterviews = useMemo(() => {
     return interviews.filter((interview) => {
@@ -159,11 +137,10 @@ export default function InterviewsPage() {
         <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Entretiens
+              {t("interviews.title")}
             </h1>
             <p className="mt-2 text-sm text-slate-600">
-              Préparez et retrouvez tous vos
-              rendez-vous de recrutement.
+              {t("interviews.subtitle")}
             </p>
           </div>
 
@@ -172,17 +149,17 @@ export default function InterviewsPage() {
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
           >
             <Plus className="size-4" />
-            Choisir une candidature
+            {t("interviews.chooseApplication")}
           </Link>
         </header>
 
         <div className="mt-8 flex gap-2 overflow-x-auto">
           {(
             [
-              ["ALL", "Tous"],
-              ["UPCOMING", "À venir"],
-              ["COMPLETED", "Terminés"],
-              ["CANCELLED", "Annulés"],
+              ["ALL", "interviews.all"],
+              ["UPCOMING", "interviews.upcoming"],
+              ["COMPLETED", "interviews.completed"],
+              ["CANCELLED", "interviews.cancelled"],
             ] as Array<
               [InterviewFilter, string]
             >
@@ -197,7 +174,7 @@ export default function InterviewsPage() {
                   : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {label}
+              {t(label)}
             </button>
           ))}
         </div>
@@ -223,11 +200,10 @@ export default function InterviewsPage() {
               <CalendarDays className="size-6" />
             </div>
             <h2 className="mt-5 text-lg font-semibold text-slate-950">
-              Aucun entretien dans cette catégorie
+              {t("interviews.empty")}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Ouvrez une candidature pour y ajouter
-              un entretien.
+              {t("interviews.emptyHint")}
             </p>
           </section>
         ) : (
@@ -277,10 +253,10 @@ export default function InterviewsPage() {
                         {interview.durationMinutes && (
                           <span className="flex items-center gap-2">
                             <Clock className="size-4 text-slate-400" />
-                            {
-                              interview.durationMinutes
-                            }{" "}
-                            minutes
+                            {t("interviews.minutes", {
+                              count:
+                                interview.durationMinutes,
+                            })}
                           </span>
                         )}
 
@@ -298,14 +274,16 @@ export default function InterviewsPage() {
                         className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses[interview.status]}`}
                       >
                         {
-                          statusLabels[
-                            interview.status
-                          ]
+                          t(
+                            `interviewStatus.${interview.status}`,
+                          )
                         }
                       </span>
 
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                        {typeLabels[interview.type]}
+                        {t(
+                          `interviewType.${interview.type}`,
+                        )}
                       </span>
                     </div>
                   </div>
@@ -317,12 +295,9 @@ export default function InterviewsPage() {
                       <div>
                         {interview.contactName && (
                           <p>
-                            Contact :{" "}
-                            <span className="font-medium text-slate-800">
-                              {
-                                interview.contactName
-                              }
-                            </span>
+                            {t("interviews.contact", {
+                              name: interview.contactName,
+                            })}
                           </p>
                         )}
                         {interview.notes && (
@@ -341,7 +316,7 @@ export default function InterviewsPage() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 font-semibold text-indigo-600 hover:text-indigo-700"
                         >
-                          Rejoindre
+                          {t("interviews.join")}
                           <ExternalLink className="size-4" />
                         </a>
                       )}

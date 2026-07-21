@@ -15,30 +15,32 @@ import {
 } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useI18n } from "@/components/i18n/language-provider";
 
 const navigation = [
   {
-    name: "Vue d’ensemble",
+    labelKey: "nav.overview",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Candidatures",
+    labelKey: "nav.applications",
     href: "/applications",
     icon: BriefcaseBusiness,
   },
   {
-    name: "Entreprises",
+    labelKey: "nav.companies",
     href: "/companies",
     icon: Building2,
   },
   {
-    name: "Entretiens",
+    labelKey: "nav.interviews",
     href: "/interviews",
     icon: CalendarDays,
   },
   {
-    name: "Documents",
+    labelKey: "nav.documents",
     href: "/documents",
     icon: FileText,
   },
@@ -57,6 +59,7 @@ export default function DashboardLayout({
     isLoading,
     logout,
   } = useAuth();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -73,7 +76,7 @@ export default function DashboardLayout({
       <main className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="flex items-center gap-3 text-sm font-medium text-slate-500">
           <span className="size-5 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
-          Chargement de votre espace…
+          {t("auth.loading")}
         </div>
       </main>
     );
@@ -101,13 +104,16 @@ export default function DashboardLayout({
             ApplyFlow
           </Link>
 
-          <div className="flex size-9 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700 lg:hidden">
-            {initials}
+          <div className="flex items-center gap-3 lg:hidden">
+            <LanguageSwitcher compact />
+            <div className="flex size-9 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700">
+              {initials}
+            </div>
           </div>
         </div>
 
         <nav
-          aria-label="Navigation principale"
+          aria-label={t("nav.main")}
           className="flex gap-2 overflow-x-auto px-4 pb-4 lg:block lg:space-y-1 lg:pb-0"
         >
           {navigation.map((item) => {
@@ -133,13 +139,17 @@ export default function DashboardLayout({
                   aria-hidden="true"
                   className="size-5"
                 />
-                {item.name}
+                {t(item.labelKey)}
               </Link>
             );
           })}
         </nav>
 
         <div className="mt-auto hidden border-t border-slate-200 p-4 lg:absolute lg:inset-x-0 lg:bottom-0 lg:block">
+          <div className="mb-4 px-2">
+            <LanguageSwitcher compact />
+          </div>
+
           <div className="mb-3 flex items-center gap-3 px-2">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
               {initials}
@@ -164,7 +174,7 @@ export default function DashboardLayout({
               aria-hidden="true"
               className="size-5"
             />
-            Se déconnecter
+            {t("nav.logout")}
           </button>
         </div>
       </aside>

@@ -17,11 +17,13 @@ import {
 } from "next/navigation";
 import {
   useEffect,
+  useMemo,
   useState,
   type FormEvent,
 } from "react";
 import { AddInterviewDialog } from "@/components/applications/add-interview-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 import { apiRequest } from "@/lib/api";
 import type {
   ApplicationDetail,
@@ -29,48 +31,7 @@ import type {
 } from "@/types/application";
 import type { ApplicationStatus } from "@/types/dashboard";
 
-const statusOptions: Array<{
-  value: ApplicationStatus;
-  label: string;
-}> = [
-  { value: "SAVED", label: "Enregistrée" },
-  {
-    value: "PREPARING",
-    label: "En préparation",
-  },
-  { value: "APPLIED", label: "Envoyée" },
-  { value: "IN_REVIEW", label: "En examen" },
-  { value: "INTERVIEW", label: "Entretien" },
-  { value: "OFFER", label: "Offre reçue" },
-  { value: "ACCEPTED", label: "Acceptée" },
-  { value: "REJECTED", label: "Refusée" },
-  { value: "WITHDRAWN", label: "Retirée" },
-];
-
-const statusLabels = Object.fromEntries(
-  statusOptions.map(({ value, label }) => [
-    value,
-    label,
-  ]),
-) as Partial<Record<ApplicationStatus, string>>;
-
-const dateFormatter = new Intl.DateTimeFormat(
-  "fr-FR",
-  {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  },
-);
-
-const dateTimeFormatter =
-  new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const statusOptions: ApplicationStatus[] = ["SAVED", "PREPARING", "APPLIED", "IN_REVIEW", "INTERVIEW", "OFFER", "ACCEPTED", "REJECTED", "WITHDRAWN"];
 
 export default function ApplicationDetailPage() {
   const { applicationId } = useParams<{
@@ -78,6 +39,9 @@ export default function ApplicationDetailPage() {
   }>();
   const router = useRouter();
   const { token } = useAuth();
+  const { locale, t } = useI18n();
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "long", year: "numeric" }), [locale]);
+  const dateTimeFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }), [locale]);
 
   const [application, setApplication] =
     useState<ApplicationDetail | null>(null);
@@ -118,7 +82,7 @@ export default function ApplicationDetailPage() {
           setError(
             caughtError instanceof Error
               ? caughtError.message
-              : "Impossible de charger la candidature.",
+              : t("applicationDetail.loadError"),
           );
         }
       })
@@ -131,7 +95,7 @@ export default function ApplicationDetailPage() {
     return () => {
       isCancelled = true;
     };
-  }, [applicationId, requestKey, token]);
+  }, [applicationId, requestKey, t, token]);
 
   async function changeStatus(
     status: ApplicationStatus,
@@ -158,7 +122,7 @@ export default function ApplicationDetailPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible de modifier le statut.",
+          : t("applicationDetail.statusError"),
       );
     } finally {
       setIsUpdating(false);
@@ -199,7 +163,7 @@ export default function ApplicationDetailPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible d’ajouter la note.",
+          : t("applicationDetail.noteError"),
       );
     } finally {
       setIsAddingNote(false);
@@ -212,7 +176,7 @@ export default function ApplicationDetailPage() {
     }
 
     const confirmed = window.confirm(
-      "Archiver cette candidature ? Elle disparaîtra de la liste active.",
+      t("applicationDetail.archiveConfirm"),
     );
 
     if (!confirmed) {
@@ -235,7 +199,7 @@ export default function ApplicationDetailPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible d’archiver la candidature.",
+          : t("applicationDetail.archiveError"),
       );
       setIsUpdating(false);
     }
@@ -263,7 +227,7 @@ export default function ApplicationDetailPage() {
             href="/applications"
             className="mt-4 inline-block text-sm font-semibold text-indigo-600"
           >
-            Retour aux candidatures
+            {t("applicationForm.back")}
           </Link>
         </div>
       </div>
@@ -282,7 +246,7 @@ export default function ApplicationDetailPage() {
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900"
         >
           <ArrowLeft className="size-4" />
-          Retour aux candidatures
+          {t("applicationForm.back")}
         </Link>
 
         {error && (
@@ -316,12 +280,11 @@ export default function ApplicationDetailPage() {
               {application.deadline && (
                 <span className="flex items-center gap-1.5">
                   <CalendarDays className="size-4" />
-                  Échéance{" "}
-                  {dateFormatter.format(
+                  {t("applicationDetail.deadline", { date: dateFormatter.format(
                     new Date(
                       application.deadline,
                     ),
-                  )}
+                  ) })}
                 </span>
               )}
 
@@ -333,7 +296,7 @@ export default function ApplicationDetailPage() {
                   className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700"
                 >
                   <ExternalLink className="size-4" />
-                  Voir l’offre
+                  {t("applicationDetail.viewOffer")}
                 </a>
               )}
             </div>
@@ -341,7 +304,7 @@ export default function ApplicationDetailPage() {
 
           <div className="flex shrink-0 items-center gap-3">
             <select
-              aria-label="Modifier le statut"
+              aria-label={t("applicationDetail.changeStatus")}
               value={application.status}
               disabled={isUpdating}
               onChange={(event) =>
@@ -352,12 +315,12 @@ export default function ApplicationDetailPage() {
               }
               className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
             >
-              {statusOptions.map((option) => (
+              {statusOptions.map((status) => (
                 <option
-                  key={option.value}
-                  value={option.value}
+                  key={status}
+                  value={status}
                 >
-                  {option.label}
+                  {t(`status.${status}`)}
                 </option>
               ))}
             </select>
@@ -369,7 +332,7 @@ export default function ApplicationDetailPage() {
               }
               disabled={isUpdating}
               className="flex size-11 items-center justify-center rounded-xl border border-slate-300 text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
-              aria-label="Archiver la candidature"
+              aria-label={t("applicationDetail.archive")}
             >
               <Trash2 className="size-4" />
             </button>
@@ -380,52 +343,39 @@ export default function ApplicationDetailPage() {
           <div className="space-y-6">
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="font-semibold text-slate-950">
-                Informations
+                {t("applicationDetail.information")}
               </h2>
 
               <dl className="mt-5 grid gap-5 sm:grid-cols-2">
                 <Detail
-                  label="Statut"
+                  label={t("applicationDetail.status")}
+                  value={t(`status.${application.status}`)}
+                />
+                <Detail
+                  label={t("applicationDetail.priority")}
+                  value={t(`priority.${application.priority}`)}
+                />
+                <Detail
+                  label={t("applicationDetail.employment")}
                   value={
-                    statusLabels[
-                      application.status
-                    ] ?? application.status
+                    application.employmentType ? t(`employment.${application.employmentType}`) : t("common.notProvided")
                   }
                 />
                 <Detail
-                  label="Priorité"
+                  label={t("applicationDetail.workMode")}
                   value={
-                    application.priority === "HIGH"
-                      ? "Haute"
-                      : application.priority ===
-                          "LOW"
-                        ? "Basse"
-                        : "Moyenne"
+                    application.workMode ? t(`workMode.${application.workMode}`) : t("common.notProvided")
                   }
                 />
                 <Detail
-                  label="Type de contrat"
-                  value={
-                    application.employmentType ??
-                    "Non renseigné"
-                  }
-                />
-                <Detail
-                  label="Mode de travail"
-                  value={
-                    application.workMode ??
-                    "Non renseigné"
-                  }
-                />
-                <Detail
-                  label="Source"
+                  label={t("applicationDetail.source")}
                   value={
                     application.source ??
-                    "Non renseignée"
+                    t("common.notProvided")
                   }
                 />
                 <Detail
-                  label="Créée le"
+                  label={t("applicationDetail.created")}
                   value={dateFormatter.format(
                     new Date(
                       application.createdAt,
@@ -437,7 +387,7 @@ export default function ApplicationDetailPage() {
               {application.description && (
                 <div className="mt-6 border-t border-slate-100 pt-5">
                   <p className="text-sm font-medium text-slate-500">
-                    Description
+                    {t("applicationDetail.description")}
                   </p>
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
                     {application.description}
@@ -451,7 +401,7 @@ export default function ApplicationDetailPage() {
                 <div className="flex items-center gap-2">
                   <MessageSquare className="size-5 text-indigo-600" />
                   <h2 className="font-semibold text-slate-950">
-                    Notes
+                    {t("applicationDetail.notes")}
                   </h2>
                 </div>
 
@@ -468,7 +418,7 @@ export default function ApplicationDetailPage() {
                         event.target.value,
                       )
                     }
-                    placeholder="Ajouter une note…"
+                    placeholder={`${t("applicationDetail.addNote")}…`}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
                   <div className="mt-3 flex justify-end">
@@ -481,8 +431,8 @@ export default function ApplicationDetailPage() {
                       className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
                       {isAddingNote
-                        ? "Ajout…"
-                        : "Ajouter la note"}
+                        ? t("applicationDetail.adding")
+                        : t("applicationDetail.addNote")}
                     </button>
                   </div>
                 </form>
@@ -490,7 +440,7 @@ export default function ApplicationDetailPage() {
 
               {application.notes.length === 0 ? (
                 <p className="p-6 text-sm text-slate-500">
-                  Aucune note pour cette candidature.
+                  {t("applicationDetail.noNotes")}
                 </p>
               ) : (
                 <div className="divide-y divide-slate-100">
@@ -519,7 +469,7 @@ export default function ApplicationDetailPage() {
           <aside className="space-y-6">
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="font-semibold text-slate-950">
-                Historique
+                {t("applicationDetail.history")}
               </h2>
 
               <div className="mt-5 space-y-5">
@@ -531,9 +481,7 @@ export default function ApplicationDetailPage() {
                     >
                       <span className="absolute -left-[5px] top-1 size-2 rounded-full bg-indigo-500" />
                       <p className="text-sm font-medium text-slate-700">
-                        {statusLabels[
-                          history.toStatus
-                        ] ?? history.toStatus}
+                        {t(`status.${history.toStatus}`)}
                       </p>
                       <p className="mt-1 text-xs text-slate-400">
                         {dateTimeFormatter.format(
@@ -553,7 +501,7 @@ export default function ApplicationDetailPage() {
                 <div className="flex items-center gap-2">
                   <CalendarDays className="size-5 text-amber-600" />
                   <h2 className="font-semibold text-slate-950">
-                    Entretiens
+                    {t("applicationDetail.interviews")}
                   </h2>
                 </div>
 
@@ -569,7 +517,7 @@ export default function ApplicationDetailPage() {
 
               {application.interviews.length === 0 ? (
                 <p className="mt-4 text-sm text-slate-500">
-                  Aucun entretien enregistré.
+                  {t("applicationDetail.noInterviews")}
                 </p>
               ) : (
                 <div className="mt-4 space-y-4">
@@ -580,7 +528,7 @@ export default function ApplicationDetailPage() {
                         className="rounded-xl bg-slate-50 p-4"
                       >
                         <p className="text-sm font-semibold text-slate-800">
-                          {interview.type}
+                          {t(`interviewType.${interview.type}`)}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
                           {dateTimeFormatter.format(
@@ -600,13 +548,13 @@ export default function ApplicationDetailPage() {
               <div className="flex items-center gap-2">
                 <FileText className="size-5 text-emerald-600" />
                 <h2 className="font-semibold text-slate-950">
-                  Documents
+                  {t("applicationDetail.documents")}
                 </h2>
               </div>
 
               {application.documents.length === 0 ? (
                 <p className="mt-4 text-sm text-slate-500">
-                  Aucun document associé.
+                  {t("applicationDetail.noDocuments")}
                 </p>
               ) : (
                 <div className="mt-4 space-y-3">
@@ -624,7 +572,7 @@ export default function ApplicationDetailPage() {
                             document.sizeBytes /
                               1024,
                           )}{" "}
-                          Ko
+                          {t("documents.kilobytes")}
                         </p>
                       </div>
                     ),

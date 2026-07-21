@@ -10,10 +10,12 @@ import {
 import Link from "next/link";
 import {
   useEffect,
+  useMemo,
   useState,
   type FormEvent,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 import { apiRequest } from "@/lib/api";
 import type {
   ApplicationRecord,
@@ -24,29 +26,17 @@ import type {
   Priority,
 } from "@/types/dashboard";
 
-const statusOptions: Array<{
-  value: ApplicationStatus;
-  label: string;
-}> = [
-  { value: "SAVED", label: "Enregistrée" },
-  {
-    value: "PREPARING",
-    label: "En préparation",
-  },
-  { value: "APPLIED", label: "Envoyée" },
-  { value: "IN_REVIEW", label: "En examen" },
-  { value: "INTERVIEW", label: "Entretien" },
-  { value: "OFFER", label: "Offre reçue" },
-  { value: "ACCEPTED", label: "Acceptée" },
-  { value: "REJECTED", label: "Refusée" },
-  { value: "WITHDRAWN", label: "Retirée" },
+const statusOptions: ApplicationStatus[] = [
+  "SAVED",
+  "PREPARING",
+  "APPLIED",
+  "IN_REVIEW",
+  "INTERVIEW",
+  "OFFER",
+  "ACCEPTED",
+  "REJECTED",
+  "WITHDRAWN",
 ];
-
-const priorityLabels: Record<Priority, string> = {
-  LOW: "Basse",
-  MEDIUM: "Moyenne",
-  HIGH: "Haute",
-};
 
 const priorityClasses: Record<Priority, string> = {
   LOW: "bg-slate-100 text-slate-600",
@@ -54,24 +44,9 @@ const priorityClasses: Record<Priority, string> = {
   HIGH: "bg-red-50 text-red-700",
 };
 
-const statusLabels = Object.fromEntries(
-  statusOptions.map(({ value, label }) => [
-    value,
-    label,
-  ]),
-) as Partial<Record<ApplicationStatus, string>>;
-
-const dateFormatter = new Intl.DateTimeFormat(
-  "fr-FR",
-  {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  },
-);
-
 export default function ApplicationsPage() {
   const { token } = useAuth();
+  const { t } = useI18n();
 
   const [applications, setApplications] =
     useState<ApplicationRecord[]>([]);
@@ -140,7 +115,7 @@ export default function ApplicationsPage() {
           setError(
             caughtError instanceof Error
               ? caughtError.message
-              : "Impossible de charger les candidatures.",
+              : t("applications.loadError"),
           );
         }
       })
@@ -159,6 +134,7 @@ export default function ApplicationsPage() {
     requestKey,
     search,
     status,
+    t,
     token,
   ]);
 
@@ -199,12 +175,12 @@ export default function ApplicationsPage() {
         <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Candidatures
+              {t("applications.title")}
             </h1>
             <p className="mt-2 text-sm text-slate-600">
-              {total} candidature
-              {total !== 1 ? "s" : ""} active
-              {total !== 1 ? "s" : ""}
+              {t("applications.count", {
+                count: total,
+              })}
             </p>
           </div>
 
@@ -216,7 +192,7 @@ export default function ApplicationsPage() {
               aria-hidden="true"
               className="size-4"
             />
-            Nouvelle candidature
+            {t("dashboard.newApplication")}
           </Link>
         </header>
 
@@ -238,13 +214,13 @@ export default function ApplicationsPage() {
                     event.target.value,
                   )
                 }
-                placeholder="Rechercher un poste, une entreprise…"
+                placeholder={t("applications.search")}
                 className="h-11 w-full rounded-xl border border-slate-300 pl-10 pr-4 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
               />
             </form>
 
             <select
-              aria-label="Filtrer par statut"
+              aria-label={t("applications.allStatuses")}
               value={status}
               onChange={(event) =>
                 changeStatus(
@@ -256,20 +232,20 @@ export default function ApplicationsPage() {
               className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
             >
               <option value="">
-                Tous les statuts
+                {t("applications.allStatuses")}
               </option>
               {statusOptions.map((option) => (
                 <option
-                  key={option.value}
-                  value={option.value}
+                  key={option}
+                  value={option}
                 >
-                  {option.label}
+                  {t(`status.${option}`)}
                 </option>
               ))}
             </select>
 
             <select
-              aria-label="Filtrer par priorité"
+              aria-label={t("applications.allPriorities")}
               value={priority}
               onChange={(event) =>
                 changePriority(
@@ -281,13 +257,13 @@ export default function ApplicationsPage() {
               className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
             >
               <option value="">
-                Toutes les priorités
+                {t("applications.allPriorities")}
               </option>
-              <option value="HIGH">Haute</option>
+              <option value="HIGH">{t("priority.HIGH")}</option>
               <option value="MEDIUM">
-                Moyenne
+                {t("priority.MEDIUM")}
               </option>
-              <option value="LOW">Basse</option>
+              <option value="LOW">{t("priority.LOW")}</option>
             </select>
           </div>
 
@@ -312,7 +288,7 @@ export default function ApplicationsPage() {
                 onClick={retry}
                 className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
               >
-                Réessayer
+                {t("common.retry")}
               </button>
             </div>
           ) : applications.length === 0 ? (
@@ -321,11 +297,10 @@ export default function ApplicationsPage() {
                 <Search className="size-5" />
               </div>
               <h2 className="mt-4 font-semibold text-slate-950">
-                Aucune candidature trouvée
+                {t("applications.empty")}
               </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Modifiez vos filtres ou ajoutez une
-                nouvelle candidature.
+                {t("applications.emptyHint")}
               </p>
             </div>
           ) : (
@@ -344,7 +319,10 @@ export default function ApplicationsPage() {
             totalPages > 1 && (
               <footer className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
                 <p className="text-sm text-slate-500">
-                  Page {page} sur {totalPages}
+                  {t("applications.page", {
+                    page,
+                    total: totalPages,
+                  })}
                 </p>
 
                 <div className="flex gap-2">
@@ -358,7 +336,7 @@ export default function ApplicationsPage() {
                       );
                     }}
                     className="flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Page précédente"
+                    aria-label={t("applications.previous")}
                   >
                     <ChevronLeft className="size-4" />
                   </button>
@@ -373,7 +351,7 @@ export default function ApplicationsPage() {
                       );
                     }}
                     className="flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Page suivante"
+                    aria-label={t("applications.next")}
                   >
                     <ChevronRight className="size-4" />
                   </button>
@@ -391,6 +369,17 @@ function ApplicationRow({
 }: {
   application: ApplicationRecord;
 }) {
+  const { locale, t } = useI18n();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+    [locale],
+  );
+
   return (
     <Link
       href={`/applications/${application.id}`}
@@ -417,8 +406,7 @@ function ApplicationRow({
 
       <div>
         <span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-          {statusLabels[application.status] ??
-            application.status}
+          {t(`status.${application.status}`)}
         </span>
       </div>
 
@@ -426,7 +414,7 @@ function ApplicationRow({
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${priorityClasses[application.priority]}`}
         >
-          {priorityLabels[application.priority]}
+          {t(`priority.${application.priority}`)}
         </span>
 
         <span className="text-xs text-slate-400 md:mt-2 md:block">

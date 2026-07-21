@@ -15,6 +15,7 @@ import {
   type FormEvent,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 import { apiRequest } from "@/lib/api";
 import type {
   ApplicationRecord,
@@ -28,36 +29,19 @@ import type {
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL;
 
-const typeLabels: Record<DocumentType, string> = {
-  CV: "CV",
-  COVER_LETTER: "Lettre de motivation",
-  CERTIFICATE: "Certificat",
-  REFERENCE: "Référence",
-  OTHER: "Autre",
-};
-
-const dateFormatter = new Intl.DateTimeFormat(
-  "fr-FR",
-  {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  },
-);
-
-function formatSize(sizeBytes: number): string {
+function formatSize(sizeBytes: number, locale: string): string {
   if (sizeBytes < 1024 * 1024) {
-    return `${Math.round(sizeBytes / 1024)} Ko`;
+    return new Intl.NumberFormat(locale, { style: "unit", unit: "kilobyte", unitDisplay: "short", maximumFractionDigits: 0 }).format(sizeBytes / 1024);
   }
-
-  return `${(
-    sizeBytes /
-    (1024 * 1024)
-  ).toFixed(1)} Mo`;
+  return new Intl.NumberFormat(locale, { style: "unit", unit: "megabyte", unitDisplay: "short", maximumFractionDigits: 1 }).format(sizeBytes / (1024 * 1024));
 }
 
 export default function DocumentsPage() {
   const { token } = useAuth();
+  const { locale, t } = useI18n();
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(locale, {
+    day: "2-digit", month: "short", year: "numeric",
+  }), [locale]);
 
   const [documents, setDocuments] = useState<
     DocumentRecord[]
@@ -128,7 +112,7 @@ export default function DocumentsPage() {
           setError(
             caughtError instanceof Error
               ? caughtError.message
-              : "Impossible de charger les documents.",
+              : t("documents.loadError"),
           );
         }
       })
@@ -141,7 +125,7 @@ export default function DocumentsPage() {
     return () => {
       isCancelled = true;
     };
-  }, [requestKey, token]);
+  }, [requestKey, t, token]);
 
   const applicationsById = useMemo(
     () =>
@@ -184,7 +168,7 @@ export default function DocumentsPage() {
 
     if (!token || !selectedFile) {
       setFormError(
-        "Sélectionnez un fichier PDF.",
+        t("documents.selectPdf"),
       );
       return;
     }
@@ -194,7 +178,7 @@ export default function DocumentsPage() {
       "application/pdf"
     ) {
       setFormError(
-        "Seuls les fichiers PDF sont acceptés.",
+        t("documents.pdfOnly"),
       );
       return;
     }
@@ -204,7 +188,7 @@ export default function DocumentsPage() {
       10 * 1024 * 1024
     ) {
       setFormError(
-        "Le fichier ne doit pas dépasser 10 Mo.",
+        t("documents.maxSize"),
       );
       return;
     }
@@ -245,7 +229,7 @@ export default function DocumentsPage() {
       setFormError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible d’envoyer le document.",
+          : t("documents.uploadError"),
       );
     } finally {
       setIsSubmitting(false);
@@ -274,7 +258,7 @@ export default function DocumentsPage() {
 
       if (!response.ok) {
         throw new Error(
-          "Impossible de télécharger le document.",
+          t("documents.downloadError"),
         );
       }
 
@@ -292,7 +276,7 @@ export default function DocumentsPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Téléchargement impossible.",
+          : t("documents.downloadError"),
       );
     } finally {
       setDownloadingId(null);
@@ -307,7 +291,7 @@ export default function DocumentsPage() {
     }
 
     const confirmed = window.confirm(
-      `Supprimer définitivement « ${document.name} » ?`,
+      t("documents.deleteConfirm", { name: document.name }),
     );
 
     if (!confirmed) {
@@ -332,7 +316,7 @@ export default function DocumentsPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Suppression impossible.",
+          : t("documents.deleteError"),
       );
     }
   }
@@ -343,11 +327,10 @@ export default function DocumentsPage() {
         <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Documents
+              {t("documents.title")}
             </h1>
             <p className="mt-2 text-sm text-slate-600">
-              CV, lettres et justificatifs utilisés
-              dans vos candidatures.
+              {t("documents.subtitle")}
             </p>
           </div>
 
@@ -357,7 +340,7 @@ export default function DocumentsPage() {
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
           >
             <Upload className="size-4" />
-            Ajouter un document
+            {t("documents.add")}
           </button>
         </header>
 
@@ -387,11 +370,10 @@ export default function DocumentsPage() {
               <FileText className="size-6" />
             </div>
             <h2 className="mt-5 text-lg font-semibold text-slate-950">
-              Votre bibliothèque est vide
+              {t("documents.empty")}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Ajoutez un CV ou une lettre de
-              motivation au format PDF.
+              {t("documents.emptyHint")}
             </p>
             <button
               type="button"
@@ -400,7 +382,7 @@ export default function DocumentsPage() {
               }
               className="mt-6 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
             >
-              Ajouter le premier document
+              {t("documents.addFirst")}
             </button>
           </section>
         ) : (
@@ -416,7 +398,7 @@ export default function DocumentsPage() {
                   </span>
 
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                    {typeLabels[document.type]}
+                    {t(`documentType.${document.type}`)}
                   </span>
                 </div>
 
@@ -425,7 +407,7 @@ export default function DocumentsPage() {
                 </h2>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  {formatSize(document.sizeBytes)} ·{" "}
+                  {formatSize(document.sizeBytes, locale)} ·{" "}
                   {dateFormatter.format(
                     new Date(document.createdAt),
                   )}
@@ -448,18 +430,13 @@ export default function DocumentsPage() {
                             }
                             className="truncate"
                           >
-                            Associé à{" "}
-                            <span className="font-medium text-slate-700">
-                              {application
-                                ? `${application.company.name} — ${application.jobTitle}`
-                                : "une candidature"}
-                            </span>
+                            {t("documents.associated", { name: application ? `${application.company.name} — ${application.jobTitle}` : t("documents.anApplication") })}
                           </p>
                         );
                       },
                     )
                   ) : (
-                    <p>Non associé</p>
+                    <p>{t("common.notAssociated")}</p>
                   )}
                 </div>
 
@@ -477,7 +454,7 @@ export default function DocumentsPage() {
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                   >
                     <Download className="size-4" />
-                    Télécharger
+                    {t("documents.download")}
                   </button>
 
                   <button
@@ -486,7 +463,7 @@ export default function DocumentsPage() {
                       void deleteDocument(document)
                     }
                     className="flex size-10 items-center justify-center rounded-xl border border-slate-300 text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                    aria-label={`Supprimer ${document.name}`}
+                    aria-label={`${t("common.delete")} ${document.name}`}
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -511,10 +488,10 @@ export default function DocumentsPage() {
                   id="upload-title"
                   className="text-lg font-semibold text-slate-950"
                 >
-                  Ajouter un document
+                  {t("documents.uploadTitle")}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  PDF uniquement, 10 Mo maximum.
+                  {t("documents.uploadHint")}
                 </p>
               </div>
 
@@ -522,7 +499,7 @@ export default function DocumentsPage() {
                 type="button"
                 onClick={closeUpload}
                 className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
-                aria-label="Fermer"
+                aria-label={t("common.close")}
               >
                 <X className="size-5" />
               </button>
@@ -546,13 +523,11 @@ export default function DocumentsPage() {
                 <span className="mt-3 text-sm font-semibold text-slate-800">
                   {selectedFile
                     ? selectedFile.name
-                    : "Choisir un fichier PDF"}
+                    : t("documents.choosePdf")}
                 </span>
                 {selectedFile && (
                   <span className="mt-1 text-xs text-slate-500">
-                    {formatSize(
-                      selectedFile.size,
-                    )}
+                    {formatSize(selectedFile.size, locale)}
                   </span>
                 )}
                 <input
@@ -574,7 +549,7 @@ export default function DocumentsPage() {
                   htmlFor="documentName"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Nom
+                  {t("documents.name")}
                 </label>
                 <input
                   id="documentName"
@@ -594,7 +569,7 @@ export default function DocumentsPage() {
                     htmlFor="documentType"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    Type
+                    {t("documents.type")}
                   </label>
                   <select
                     id="documentType"
@@ -607,14 +582,12 @@ export default function DocumentsPage() {
                     }
                     className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   >
-                    {Object.entries(
-                      typeLabels,
-                    ).map(([value, label]) => (
+                    {(["CV", "COVER_LETTER", "CERTIFICATE", "REFERENCE", "OTHER"] as DocumentType[]).map((value) => (
                       <option
                         key={value}
                         value={value}
                       >
-                        {label}
+                        {t(`documentType.${value}`)}
                       </option>
                     ))}
                   </select>
@@ -625,7 +598,7 @@ export default function DocumentsPage() {
                     htmlFor="documentApplication"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    Candidature
+                    {t("documents.application")}
                   </label>
                   <select
                     id="documentApplication"
@@ -638,7 +611,7 @@ export default function DocumentsPage() {
                     className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   >
                     <option value="">
-                      Non associé
+                      {t("common.notAssociated")}
                     </option>
                     {applications.map(
                       (application) => (
@@ -664,7 +637,7 @@ export default function DocumentsPage() {
                   onClick={closeUpload}
                   className="h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -677,8 +650,8 @@ export default function DocumentsPage() {
                 >
                   <Plus className="size-4" />
                   {isSubmitting
-                    ? "Envoi…"
-                    : "Ajouter"}
+                    ? t("documents.uploading")
+                    : t("common.add")}
                 </button>
               </footer>
             </form>

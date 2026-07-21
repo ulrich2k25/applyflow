@@ -7,10 +7,12 @@ import {
   type FormEvent,
 } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useI18n } from "@/components/i18n/language-provider";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
+  const { t } = useI18n();
 
   const [firstName, setFirstName] =
     useState("");
@@ -35,14 +37,14 @@ export default function RegisterPage() {
 
     if (password.length < 12) {
       setError(
-        "Le mot de passe doit contenir au moins 12 caractères.",
+        t("auth.passwordTooShort"),
       );
       return;
     }
 
     if (password !== passwordConfirmation) {
       setError(
-        "Les deux mots de passe ne correspondent pas.",
+        t("auth.passwordMismatch"),
       );
       return;
     }
@@ -62,7 +64,7 @@ export default function RegisterPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Inscription impossible. Veuillez réessayer.",
+          : t("auth.registerError"),
       );
     } finally {
       setIsSubmitting(false);
@@ -73,16 +75,15 @@ export default function RegisterPage() {
     <>
       <div className="mb-8">
         <p className="text-sm font-semibold text-indigo-600">
-          Commencez gratuitement
+          {t("auth.startFree")}
         </p>
 
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-          Créez votre espace ApplyFlow
+          {t("auth.registerTitle")}
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Centralisez votre recherche d’emploi dès
-          votre première candidature.
+          {t("auth.registerSubtitle")}
         </p>
       </div>
 
@@ -105,7 +106,7 @@ export default function RegisterPage() {
               htmlFor="firstName"
               className="mb-2 block text-sm font-medium text-slate-700"
             >
-              Prénom
+              {t("auth.firstName")}
             </label>
 
             <input
@@ -128,7 +129,7 @@ export default function RegisterPage() {
               htmlFor="lastName"
               className="mb-2 block text-sm font-medium text-slate-700"
             >
-              Nom
+              {t("auth.lastName")}
             </label>
 
             <input
@@ -152,7 +153,7 @@ export default function RegisterPage() {
             htmlFor="email"
             className="mb-2 block text-sm font-medium text-slate-700"
           >
-            Adresse e-mail
+            {t("auth.email")}
           </label>
 
           <input
@@ -175,7 +176,7 @@ export default function RegisterPage() {
             htmlFor="password"
             className="mb-2 block text-sm font-medium text-slate-700"
           >
-            Mot de passe
+            {t("auth.password")}
           </label>
 
           <input
@@ -189,7 +190,7 @@ export default function RegisterPage() {
             onChange={(event) =>
               setPassword(event.target.value)
             }
-            placeholder="12 caractères minimum"
+            placeholder={t("auth.passwordHint")}
             className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
           />
         </div>
@@ -199,7 +200,7 @@ export default function RegisterPage() {
             htmlFor="passwordConfirmation"
             className="mb-2 block text-sm font-medium text-slate-700"
           >
-            Confirmer le mot de passe
+            {t("auth.confirmPassword")}
           </label>
 
           <input
@@ -225,18 +226,18 @@ export default function RegisterPage() {
           className="flex h-12 w-full items-center justify-center rounded-xl bg-indigo-600 px-5 font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting
-            ? "Création du compte…"
-            : "Créer mon compte"}
+            ? t("auth.registering")
+            : t("auth.register")}
         </button>
       </form>
 
       <p className="mt-8 text-center text-sm text-slate-600">
-        Vous avez déjà un compte ?{" "}
+        {t("auth.hasAccount")} {" "}
         <Link
           href="/login"
           className="font-semibold text-indigo-600 hover:text-indigo-700"
         >
-          Se connecter
+          {t("auth.login")}
         </Link>
       </p>
     </>
