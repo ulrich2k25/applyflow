@@ -37,6 +37,7 @@ const typeLabels: Record<
   ON_SITE: "Sur site",
   TECHNICAL: "Technique",
   HR: "Ressources humaines",
+  CASE_STUDY: "Étude de cas",
   OTHER: "Autre",
 };
 

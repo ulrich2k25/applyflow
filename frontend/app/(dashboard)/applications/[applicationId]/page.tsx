@@ -20,6 +20,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { AddInterviewDialog } from "@/components/applications/add-interview-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { apiRequest } from "@/lib/api";
 import type {
@@ -548,11 +549,22 @@ export default function ApplicationDetailPage() {
             </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="size-5 text-amber-600" />
-                <h2 className="font-semibold text-slate-950">
-                  Entretiens
-                </h2>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="size-5 text-amber-600" />
+                  <h2 className="font-semibold text-slate-950">
+                    Entretiens
+                  </h2>
+                </div>
+
+                <AddInterviewDialog
+                  applicationId={application.id}
+                  onCreated={() =>
+                    setRequestKey(
+                      (current) => current + 1,
+                    )
+                  }
+                />
               </div>
 
               {application.interviews.length === 0 ? (

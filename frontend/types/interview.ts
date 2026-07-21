@@ -4,6 +4,7 @@ export type InterviewType =
   | "ON_SITE"
   | "TECHNICAL"
   | "HR"
+  | "CASE_STUDY"
   | "OTHER";
 
 export type InterviewStatus =
