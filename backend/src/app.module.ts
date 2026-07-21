@@ -11,6 +11,7 @@ import { InterviewsModule } from './interviews/interviews.module';
 import { NotesModule } from './notes/notes.module';
 import { DocumentsModule } from './documents/documents.module';
 import { StorageModule } from './storage/storage.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { StorageModule } from './storage/storage.module';
     NotesModule,
     DocumentsModule,
     StorageModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
