@@ -16,6 +16,34 @@ export class InterviewsService {
     private readonly applicationsService: ApplicationsService,
   ) {}
 
+  async findAllForUser(userId: string) {
+    return this.prisma.interview.findMany({
+      where: {
+        application: {
+          userId,
+          archivedAt: null,
+        },
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+      include: {
+        application: {
+          select: {
+            id: true,
+            jobTitle: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async create(userId: string, applicationId: string, dto: CreateInterviewDto) {
     await this.ensureActiveApplication(userId, applicationId);
 

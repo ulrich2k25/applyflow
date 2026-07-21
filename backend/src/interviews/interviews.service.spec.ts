@@ -34,6 +34,38 @@ describe('InterviewsService', () => {
     service = new InterviewsService(prisma, applicationsService);
   });
 
+  it('lists interviews only for active applications owned by the user', async () => {
+    interviewRepository.findMany.mockResolvedValue([]);
+
+    await service.findAllForUser(userId);
+
+    expect(interviewRepository.findMany).toHaveBeenCalledWith({
+      where: {
+        application: {
+          userId,
+          archivedAt: null,
+        },
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+      include: {
+        application: {
+          select: {
+            id: true,
+            jobTitle: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+
   it('checks the application owner before listing interviews', async () => {
     findApplicationMock.mockResolvedValue({
       archivedAt: null,
