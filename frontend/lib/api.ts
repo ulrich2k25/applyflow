@@ -1,5 +1,8 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export const AUTH_UNAUTHORIZED_EVENT =
+  "applyflow:unauthorized";
+
 interface ApiErrorBody {
   message?: string | string[];
 }
@@ -63,6 +66,15 @@ export async function apiRequest<T>(
   );
 
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      typeof window !== "undefined"
+    ) {
+      window.dispatchEvent(
+        new Event(AUTH_UNAUTHORIZED_EVENT),
+      );
+    }
+
     const errorBody: unknown = await response
       .json()
       .catch(() => null);

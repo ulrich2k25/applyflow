@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  Archive,
   Building2,
   Globe,
   MapPin,
+  Pencil,
   Plus,
   X,
 } from "lucide-react";
@@ -53,6 +55,8 @@ export default function CompaniesPage() {
     useState<CreateCompanyData>(emptyForm);
   const [isFormOpen, setIsFormOpen] =
     useState(false);
+  const [editingCompany, setEditingCompany] =
+    useState<Company | null>(null);
   const [isLoading, setIsLoading] =
     useState(true);
   const [isSubmitting, setIsSubmitting] =
@@ -118,8 +122,33 @@ export default function CompaniesPage() {
     }
 
     setIsFormOpen(false);
+    setEditingCompany(null);
     setForm(emptyForm);
     setFormError(null);
+  }
+
+  function openCreateForm() {
+    setEditingCompany(null);
+    setForm(emptyForm);
+    setFormError(null);
+    setIsFormOpen(true);
+  }
+
+  function openEditForm(company: Company) {
+    setEditingCompany(company);
+    setForm({
+      name: company.name,
+      website: company.website ?? "",
+      industry: company.industry ?? "",
+      city: company.city ?? "",
+      country: company.country ?? "",
+      contactName: company.contactName ?? "",
+      contactEmail: company.contactEmail ?? "",
+      contactPhone: company.contactPhone ?? "",
+      notes: company.notes ?? "",
+    });
+    setFormError(null);
+    setIsFormOpen(true);
   }
 
   async function handleSubmit(
@@ -135,15 +164,23 @@ export default function CompaniesPage() {
     setFormError(null);
 
     try {
-      await apiRequest<Company>("/companies", {
-        method: "POST",
-        token,
-        body: JSON.stringify(
-          removeEmptyValues(form),
-        ),
-      });
+      await apiRequest<Company>(
+        editingCompany
+          ? `/companies/${editingCompany.id}`
+          : "/companies",
+        {
+          method: editingCompany
+            ? "PATCH"
+            : "POST",
+          token,
+          body: JSON.stringify(
+            removeEmptyValues(form),
+          ),
+        },
+      );
 
       setIsFormOpen(false);
+      setEditingCompany(null);
       setForm(emptyForm);
       setIsLoading(true);
       setRequestKey((current) => current + 1);
@@ -151,10 +188,45 @@ export default function CompaniesPage() {
       setFormError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Impossible de créer l’entreprise.",
+          : "Impossible d’enregistrer l’entreprise.",
       );
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function archiveCompany(
+    company: Company,
+  ) {
+    if (!token) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Archiver l’entreprise « ${company.name} » ?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await apiRequest(`/companies/${company.id}`, {
+        method: "DELETE",
+        token,
+      });
+
+      setCompanies((current) =>
+        current.filter(
+          (item) => item.id !== company.id,
+        ),
+      );
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Impossible d’archiver l’entreprise.",
+      );
     }
   }
 
@@ -175,7 +247,7 @@ export default function CompaniesPage() {
 
           <button
             type="button"
-            onClick={() => setIsFormOpen(true)}
+            onClick={openCreateForm}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
           >
             <Plus className="size-4" />
@@ -212,7 +284,7 @@ export default function CompaniesPage() {
             </p>
             <button
               type="button"
-              onClick={() => setIsFormOpen(true)}
+              onClick={openCreateForm}
               className="mt-6 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
             >
               Ajouter une entreprise
@@ -272,6 +344,30 @@ export default function CompaniesPage() {
                     </p>
                   </div>
                 )}
+
+                <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openEditForm(company)
+                    }
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Pencil className="size-4" />
+                    Modifier
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void archiveCompany(company)
+                    }
+                    className="flex size-10 items-center justify-center rounded-xl border border-slate-300 text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                    aria-label={`Archiver ${company.name}`}
+                  >
+                    <Archive className="size-4" />
+                  </button>
+                </div>
               </article>
             ))}
           </section>
@@ -292,7 +388,9 @@ export default function CompaniesPage() {
                   id="company-form-title"
                   className="text-lg font-semibold text-slate-950"
                 >
-                  Nouvelle entreprise
+                  {editingCompany
+                    ? "Modifier l’entreprise"
+                    : "Nouvelle entreprise"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Seul le nom est obligatoire.
@@ -460,8 +558,10 @@ export default function CompaniesPage() {
                   className="h-11 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
                 >
                   {isSubmitting
-                    ? "Création…"
-                    : "Créer l’entreprise"}
+                    ? "Enregistrement…"
+                    : editingCompany
+                      ? "Enregistrer"
+                      : "Créer l’entreprise"}
                 </button>
               </footer>
             </form>

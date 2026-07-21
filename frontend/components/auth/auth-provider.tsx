@@ -9,7 +9,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { apiRequest } from "@/lib/api";
+import {
+  apiRequest,
+  AUTH_UNAUTHORIZED_EVENT,
+} from "@/lib/api";
 import type {
   AuthResponse,
   LoginCredentials,
@@ -154,6 +157,20 @@ export function AuthProvider({
     setUser(null);
     setToken(null);
   }, []);
+
+  useEffect(() => {
+    window.addEventListener(
+      AUTH_UNAUTHORIZED_EVENT,
+      logout,
+    );
+
+    return () => {
+      window.removeEventListener(
+        AUTH_UNAUTHORIZED_EVENT,
+        logout,
+      );
+    };
+  }, [logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
