@@ -27,7 +27,7 @@ export class ApplicationsService {
 
     if (company.archivedAt !== null) {
       throw new BadRequestException(
-        'Impossible de créer une candidature pour une entreprise archivée.',
+        'Impossible de crÃ©er une candidature pour une entreprise archivÃ©e.',
       );
     }
 
@@ -53,7 +53,7 @@ export class ApplicationsService {
           ...applicationData,
           userId,
           status,
-          deadline: deadline !== undefined ? new Date(deadline) : undefined,
+          deadline: deadline != null ? new Date(deadline) : undefined,
           appliedAt: effectiveAppliedAt,
         },
         include: {
@@ -199,7 +199,7 @@ export class ApplicationsService {
 
     if (dto.status === ApplicationStatus.ARCHIVED) {
       throw new BadRequestException(
-        'Utilisez la route d’archivage pour archiver une candidature.',
+        'Utilisez la route dâ€™archivage pour archiver une candidature.',
       );
     }
 
@@ -239,7 +239,7 @@ export class ApplicationsService {
         },
         data: {
           ...applicationData,
-          deadline: deadline !== undefined ? new Date(deadline) : undefined,
+          deadline: deadline != null ? new Date(deadline) : undefined,
           appliedAt: effectiveAppliedAt,
         },
         include: {
@@ -331,7 +331,7 @@ export class ApplicationsService {
       salaryMax < salaryMin
     ) {
       throw new BadRequestException(
-        'Le salaire maximum doit être supérieur ou égal au salaire minimum.',
+        'Le salaire maximum doit Ãªtre supÃ©rieur ou Ã©gal au salaire minimum.',
       );
     }
 
@@ -340,7 +340,7 @@ export class ApplicationsService {
       currency === undefined
     ) {
       throw new BadRequestException(
-        'La devise est obligatoire lorsqu’un salaire est renseigné.',
+        'La devise est obligatoire lorsquâ€™un salaire est renseignÃ©.',
       );
     }
   }
