@@ -105,6 +105,7 @@ model User {
   applications Application[]
   documents    Document[]
   authTokens   AuthToken[]
+  integrationApiKeys IntegrationApiKey[]
 
   @@map("users")
 }
@@ -258,4 +259,21 @@ model ApplicationDocument {
 
   @@id([applicationId, documentId])
   @@map("application_documents")
+}
+
+
+
+model IntegrationApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  name       String    @db.VarChar(100)
+  keyHash    String    @unique @map("key_hash") @db.Char(64)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(3)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("integration_api_keys")
 }
