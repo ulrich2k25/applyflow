@@ -23,6 +23,8 @@ export default function RegisterPage() {
     useState("");
   const [passwordConfirmation, setPasswordConfirmation] =
     useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
   const [error, setError] = useState<
     string | null
   >(null);
