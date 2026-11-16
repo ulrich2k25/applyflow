@@ -275,9 +275,11 @@ function ApplicationFormPage() {
       payload.deadline = form.deadline;
     }
 
+    const { companyId: _companyId, ...updatePayload } = payload;
+
     const requestPayload = isEditing
       ? {
-          ...payload,
+          ...updatePayload,
           jobUrl: form.jobUrl.trim() || null,
           description: form.description.trim() || null,
           location: form.location.trim() || null,
@@ -609,7 +611,7 @@ function ApplicationFormPage() {
               <Save className="size-4" />
               {isSubmitting
                 ? isEditing ? "Wird gespeichert?" : t("applicationForm.creating")
-                : isEditing ? "?nderungen speichern" : t("applicationForm.create")}
+                : isEditing ? "\u00C4nderungen speichern" : t("applicationForm.create")}
             </button>
           </footer>
         </form>
