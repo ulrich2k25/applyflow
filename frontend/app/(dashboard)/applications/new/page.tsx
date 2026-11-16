@@ -373,7 +373,7 @@ function ApplicationFormPage() {
                 <select
                   id="companyId"
                   required
-                  disabled={isLoadingCompanies}
+                  disabled={isLoadingCompanies || isEditing}
                   value={form.companyId}
                   onChange={(event) =>
                     updateField(
@@ -705,4 +705,5 @@ function SelectField({
     </div>
   );
 }
+
 
