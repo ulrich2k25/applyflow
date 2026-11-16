@@ -1,12 +1,13 @@
-"use client";
+﻿"use client";
 
 import {
   ArrowLeft,
   Save,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
+  Suspense,
   useEffect,
   useState,
   type FormEvent,
@@ -61,7 +62,18 @@ const initialForm: ApplicationForm = {
 };
 
 export default function NewApplicationPage() {
+  return (
+    <Suspense fallback={<div className="p-6 sm:p-8" />}>
+      <ApplicationFormPage />
+    </Suspense>
+  );
+}
+
+function ApplicationFormPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+  const isEditing = Boolean(editId);
   const { token } = useAuth();
   const { t } = useI18n();
 
@@ -72,6 +84,8 @@ export default function NewApplicationPage() {
     useState<ApplicationForm>(initialForm);
   const [isLoadingCompanies, setIsLoadingCompanies] =
     useState(true);
+  const [isLoadingApplication, setIsLoadingApplication] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] =
     useState(false);
   const [error, setError] = useState<
@@ -92,7 +106,7 @@ export default function NewApplicationPage() {
         if (!isCancelled) {
           setCompanies(data);
 
-          if (data.length === 1) {
+          if (data.length === 1 && !editId) {
             setForm((current) => ({
               ...current,
               companyId: data[0]?.id ?? "",
@@ -118,7 +132,54 @@ export default function NewApplicationPage() {
     return () => {
       isCancelled = true;
     };
-  }, [t, token]);
+  }, [editId, t, token]);
+
+
+  useEffect(() => {
+    if (!token || !editId) return;
+
+    let isCancelled = false;
+    setIsLoadingApplication(true);
+
+    apiRequest<ApplicationRecord>(`/applications/${editId}`, { token })
+      .then((data) => {
+        if (isCancelled) return;
+
+        setForm({
+          companyId: data.companyId,
+          jobTitle: data.jobTitle,
+          jobUrl: data.jobUrl ?? "",
+          description: data.description ?? "",
+          location: data.location ?? "",
+          employmentType: data.employmentType ?? "",
+          workMode: data.workMode ?? "",
+          source: data.source ?? "",
+          salaryMin: data.salaryMin ?? "",
+          salaryMax: data.salaryMax ?? "",
+          currency: data.currency ?? "EUR",
+          status: data.status,
+          priority: data.priority,
+          deadline: data.deadline ? data.deadline.slice(0, 10) : "",
+        });
+        setError(null);
+      })
+      .catch((caughtError: unknown) => {
+        if (!isCancelled) {
+          setError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Bewerbung konnte nicht geladen werden.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) setIsLoadingApplication(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [editId, token]);
 
   function updateField<K extends keyof ApplicationForm>(
     field: K,
@@ -214,19 +275,40 @@ export default function NewApplicationPage() {
       payload.deadline = form.deadline;
     }
 
+    const requestPayload = isEditing
+      ? {
+          ...payload,
+          jobUrl: form.jobUrl.trim() || null,
+          description: form.description.trim() || null,
+          location: form.location.trim() || null,
+          employmentType: form.employmentType || null,
+          workMode: form.workMode || null,
+          source: form.source.trim() || null,
+          salaryMin: salaryMin ?? null,
+          salaryMax: salaryMax ?? null,
+          currency:
+            salaryMin !== undefined || salaryMax !== undefined
+              ? form.currency.trim().toUpperCase()
+              : null,
+          deadline: form.deadline || null,
+        }
+      : payload;
+
     setIsSubmitting(true);
 
     try {
       await apiRequest<ApplicationRecord>(
-        "/applications",
+        isEditing && editId ? `/applications/${editId}` : "/applications",
         {
-          method: "POST",
+          method: isEditing ? "PATCH" : "POST",
           token,
-          body: JSON.stringify(payload),
+          body: JSON.stringify(requestPayload),
         },
       );
 
-      router.push("/applications");
+      router.push(
+        isEditing && editId ? `/applications/${editId}` : "/applications",
+      );
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -242,7 +324,7 @@ export default function NewApplicationPage() {
     <div className="p-6 sm:p-8">
       <div className="mx-auto max-w-4xl">
         <Link
-          href="/applications"
+          href={isEditing && editId ? `/applications/${editId}` : "/applications"}
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
         >
           <ArrowLeft className="size-4" />
@@ -251,10 +333,10 @@ export default function NewApplicationPage() {
 
         <header className="mt-6">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-            {t("applicationForm.title")}
+            {isEditing ? "Bewerbung bearbeiten" : t("applicationForm.title")}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            {t("applicationForm.subtitle")}
+            {isEditing ? "Bewerbungsdaten aktualisieren." : t("applicationForm.subtitle")}
           </p>
         </header>
 
@@ -396,7 +478,7 @@ export default function NewApplicationPage() {
                 onChange={(value) =>
                   updateField("source", value)
                 }
-                placeholder="LinkedIn, site carrière…"
+                placeholder="LinkedIn, site carriÃ¨reâ€¦"
               />
 
               <FormField
@@ -509,7 +591,7 @@ export default function NewApplicationPage() {
 
           <footer className="flex justify-end gap-3">
             <Link
-              href="/applications"
+              href={isEditing && editId ? `/applications/${editId}` : "/applications"}
               className="inline-flex h-11 items-center rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               {t("common.cancel")}
@@ -519,14 +601,15 @@ export default function NewApplicationPage() {
               type="submit"
               disabled={
                 isSubmitting ||
+                isLoadingApplication ||
                 companies.length === 0
               }
               className="inline-flex h-11 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Save className="size-4" />
               {isSubmitting
-                ? t("applicationForm.creating")
-                : t("applicationForm.create")}
+                ? isEditing ? "Wird gespeichert?" : t("applicationForm.creating")
+                : isEditing ? "?nderungen speichern" : t("applicationForm.create")}
             </button>
           </footer>
         </form>
@@ -622,3 +705,4 @@ function SelectField({
     </div>
   );
 }
+

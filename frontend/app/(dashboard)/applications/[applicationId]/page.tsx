@@ -8,6 +8,7 @@ import {
   FileText,
   MapPin,
   MessageSquare,
+  Pencil,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -303,6 +304,14 @@ export default function ApplicationDetailPage() {
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href={`/applications/new?edit=${application.id}`}
+              className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <Pencil className="size-4" />
+              <span className="hidden sm:inline">Bearbeiten</span>
+            </Link>
+
             <select
               aria-label={t("applicationDetail.changeStatus")}
               value={application.status}
